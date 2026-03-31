@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f0fdf4;
+  --color-primary-100: #dcfce7;
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #16a34a;
+  --color-primary-700: #15803d;
+  --color-primary-800: #166534;
+  --color-primary-900: #14532d;
+  --color-primary-950: #052e16;
+}
+
+/* Base Body Styles */
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-width: 100vw;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  background-color: #0f172a; /* Solid Slate-900 for stability */
+  color: #f8fafc; /* High-contrast Off-white text */
+  transition: background-color 0.3s ease;
+}
+
+/* 
+  ===========================================
+    CLEAN DARK MODE ENGINE (REPLACED ECO/CYBER)
+  ===========================================
+*/
+html.dark body {
+  background-color: #0f172a;
+  background-image: none; /* Removed mesh gradients */
+  color: #f8fafc;
+}
+
+/* Simplified Glassmorphism */
+.glass {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.glass-accent {
+  background: rgba(22, 163, 74, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* Standard Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+.bg-gradient-brand {
+  background-image: linear-gradient(to right, #16a34a, #2563eb);
+}
