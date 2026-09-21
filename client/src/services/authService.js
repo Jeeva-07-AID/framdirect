@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient';
  */
 
 const MOCK_AUTH = false; 
-export const DEMO_MODE = true; // Set to true for hackathon/demo bypass
+export const DEMO_MODE = false; // Real Supabase Auth & Database enabled
 
 export const formatPhoneE164 = (phone) => {
   const digits = phone.replace(/\D/g, '');

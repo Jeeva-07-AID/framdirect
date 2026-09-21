@@ -330,9 +330,11 @@ create policy "Farmers can manage own shop products"
 -- Enable realtime for shop products
 alter publication supabase_realtime add table public.farmer_shop_products;
 
--- Alter orders table to support shop purchases natively
+-- Alter orders table to support shop purchases, fast sell, and pre-orders natively
 alter table public.orders alter column product_id drop not null;
 alter table public.orders add column shop_product_id uuid references public.farmer_shop_products(id);
+alter table public.orders add column fast_sell_id uuid references public.fast_sell(id);
+alter table public.orders add column pre_order_product_id uuid references public.pre_orders_products(id);
 
 -- ==================== NOTIFICATIONS TABLE ====================
 create table if not exists public.notifications (

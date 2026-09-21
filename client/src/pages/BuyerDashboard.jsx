@@ -11,6 +11,7 @@ import BuyerOrders from '../components/dashboard/BuyerOrders';
 import FastBuy from '../components/dashboard/FastBuy';
 import PreOrderBuyer from '../components/PreOrderBuyer';
 import BuyerShop from '../components/dashboard/BuyerShop';
+import BuyerProfile from '../components/dashboard/BuyerProfile';
 import FarmBackground from '../components/ui/FarmBackground';
 import GlassCard from '../components/ui/GlassCard';
 import SetPasswordModal from '../components/SetPasswordModal';
@@ -28,6 +29,7 @@ const BuyerDashboard = () => {
     { id: 'recommendations', label: t('tab_nearby'), icon: Map },
     { id: 'future', label: t('tab_future'), icon: Sprout },
     { id: 'orders', label: t('tab_my_orders'), icon: ClipboardList },
+    { id: 'profile', label: t('tab_profile', 'Profile'), icon: User },
   ];
 
   const handleTabClick = (id) => {
@@ -192,6 +194,7 @@ const BuyerDashboard = () => {
                     {activeTab === 'recommendations' && <BuyerRecommendations />}
                     {activeTab === 'future' && <PreOrderBuyer />}
                     {activeTab === 'orders' && <BuyerOrders />}
+                    {activeTab === 'profile' && <BuyerProfile />}
                  </GlassCard>
               </motion.div>
            </AnimatePresence>
