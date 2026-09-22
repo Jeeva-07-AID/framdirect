@@ -100,7 +100,7 @@ const FastSell = () => {
 
   const startVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {
-      alert(t('voice_recognition_not_supported'));
+      notifyError('Voice Input', t('voice_recognition_not_supported') || 'Voice recognition is not supported in this browser.');
       return;
     }
     const recognition = new window.webkitSpeechRecognition();
@@ -169,7 +169,7 @@ const FastSell = () => {
         </motion.div>
       ) : (
         <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(USE_FAKE_DATA || items.length === 0 ? getFakeFastSells() : items).filter(i => new Date(i.expiryTime).getTime() > currentTime).map(item => (
+          {(items.length > 0 ? items : getFakeFastSells()).filter(i => new Date(i.expiryTime).getTime() > currentTime).map(item => (
             <motion.div variants={itemAnim} whileHover={{ y: -5, scale: 1.02 }} className="bg-slate-900/60 backdrop-blur-md border border-amber-500/30 rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(245,158,11,0.1)] relative group" key={item._id || item.id}>
               
               {/* Highlight bar urgent glow */}

@@ -2,221 +2,132 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Snowflake, Wind, Package, MapPin, Phone, Filter,
-  ChevronDown, Loader2, Warehouse, AlertTriangle, CheckCircle, Search, X, ArrowRight, Brain, Thermometer, Clock
+  ChevronDown, Loader2, Warehouse, AlertTriangle, CheckCircle, Search, X, 
+  ArrowRight, Brain, Thermometer, Clock, TrendingUp, ShieldCheck, CheckCircle2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getStorageFacilities, filterStorage } from '../services/storageService';
-import GlassCard from './ui/GlassCard';
-import ProgressBar from './ui/ProgressBar';
-import AnimatedButton from './ui/AnimatedButton';
+import { getStorageFacilities } from '../services/storageService';
+import StorageReservationModal from './StorageReservationModal';
+import { getSavedStorageReservations } from '../services/pipelineService';
 
-// ── AI Storage Recommendation Panel ──────────────────────────────────────────
-const CROP_RISK = [
-  { crop: 'Tomatoes',  risk: 'High',   shelfLife: '5-7 days',  bestStorage: 'cold',    temp: '10-13°C', icon: '🍅' },
-  { crop: 'Potatoes',  risk: 'Low',    shelfLife: '3-5 weeks', bestStorage: 'dry',     temp: '7-10°C',  icon: '🥔' },
-  { crop: 'Mangoes',   risk: 'High',   shelfLife: '2-5 days',  bestStorage: 'cold',    temp: '13-15°C', icon: '🥭' },
-  { crop: 'Rice',      risk: 'Low',    shelfLife: '6+ months', bestStorage: 'dry',     temp: 'Ambient', icon: '🌾' },
-  { crop: 'Spinach',   risk: 'Critical', shelfLife: '2-3 days', bestStorage: 'freezer', temp: '0-2°C',  icon: '🥬' },
-  { crop: 'Onions',    risk: 'Medium', shelfLife: '2-4 weeks', bestStorage: 'dry',     temp: '3-5°C',   icon: '🧅' },
-];
-const RISK_COLOR = {
-  Critical: 'rose', High: 'amber', Medium: 'blue', Low: 'emerald',
-};
+// ── Economic Decision Tool: Store vs Sell Advisor ────────────────────────────
+const EconomicStorageAdvisor = () => {
+  const [selectedCrop, setSelectedCrop] = useState('Tomatoes');
 
-const SmartStorageAdvisor = () => {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <GlassCard className="border-cyan-500/20 bg-cyan-500/5 relative overflow-hidden" delay={0}>
-      <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/5 blur-3xl rounded-full pointer-events-none" />
-      <div className="flex items-center gap-3 mb-4 relative z-10">
-        <div className="p-2.5 bg-cyan-500/20 rounded-xl border border-cyan-500/30">
-          <Brain className="w-5 h-5 text-cyan-400" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-black text-white uppercase tracking-tight">AI Storage Advisor</h3>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Crop-specific risk & temperature guidance</p>
-        </div>
-        <button
-          onClick={() => setExpanded(e => !e)}
-          className="px-4 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-400 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
-        >
-          {expanded ? 'Collapse' : 'View Guide'}
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="relative z-10 overflow-hidden"
-          >
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
-              {CROP_RISK.map((c, i) => {
-                const rc = RISK_COLOR[c.risk] || 'slate';
-                return (
-                  <motion.div
-                    key={c.crop}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                    className={`bg-slate-900/80 border border-${rc}-500/20 rounded-2xl p-4 text-center hover:border-${rc}-500/40 transition-all`}
-                  >
-                    <span className="text-2xl block mb-2">{c.icon}</span>
-                    <p className="text-xs font-black text-white mb-1">{c.crop}</p>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-${rc}-500/20 text-${rc}-400 border border-${rc}-500/30`}>
-                      {c.risk} Risk
-                    </span>
-                    <div className="mt-3 space-y-1">
-                      <p className="text-[9px] text-slate-500 flex items-center gap-1 justify-center">
-                        <Clock className="w-2.5 h-2.5" />{c.shelfLife}
-                      </p>
-                      <p className="text-[9px] text-slate-500 flex items-center gap-1 justify-center">
-                        <Thermometer className="w-2.5 h-2.5" />{c.temp}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-            <div className="mt-4 p-4 bg-slate-900/60 rounded-2xl border border-white/5 flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-400 leading-relaxed">
-                <span className="font-black text-amber-400">Pro Tip: </span>
-                Leafy vegetables lose 40% of their nutritional value within 24 hours at room temperature.
-                Book a cold storage node immediately after harvest for maximum quality preservation.
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </GlassCard>
-  );
-};
-
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-const useTypeConfig = () => {
-  const { t } = useTranslation();
-  return {
-    cold: {
-      label: t('cold_storage'),
-      Icon: Snowflake,
-      color: 'text-cyan-400',
-      bg: 'bg-cyan-500/10',
-      border: 'border-cyan-500/20',
+  const economicData = {
+    Tomatoes: {
+      currentPrice: 28,
+      forecastPrice: 35,
+      days: 5,
+      storageCostPerDay: 0.8,
+      recommendation: 'STORE',
+      rationale: 'Demand spike in Chennai terminal over the weekend will elevate farmgate prices above cumulative storage expense.'
     },
-    freezer: {
-      label: t('freezer_room'),
-      Icon: Wind,
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/10',
-      border: 'border-blue-500/20',
+    Potatoes: {
+      currentPrice: 24,
+      forecastPrice: 26,
+      days: 14,
+      storageCostPerDay: 0.25,
+      recommendation: 'STORE',
+      rationale: 'Stable shelf-life allows farmers to bypass mid-month localized gluts.'
     },
-    dry: {
-      label: t('dry_warehouse'),
-      Icon: Package,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10',
-      border: 'border-amber-500/20',
-    },
+    Onions: {
+      currentPrice: 32,
+      forecastPrice: 30,
+      days: 7,
+      storageCostPerDay: 0.4,
+      recommendation: 'SELL NOW',
+      rationale: 'Northern harvest arrivals anticipated next week will increase overall supply and soften prices.'
+    }
   };
-};
 
-const getPct = (avail, total) => Math.round((avail / total) * 100);
-
-// ── sub-components ───────────────────────────────────────────────────────────
-const StorageCard = ({ facility, index }) => {
-  const { t } = useTranslation();
-  const TYPE_CONFIG = useTypeConfig();
-  const cfg = TYPE_CONFIG[facility.type] || TYPE_CONFIG.dry;
-  const pct = getPct(facility.available_capacity, facility.capacity);
-  const low = pct < 20;
+  const curr = economicData[selectedCrop] || economicData.Tomatoes;
+  const totalStorageCost = (curr.storageCostPerDay * curr.days).toFixed(2);
+  const netGain = (curr.forecastPrice - curr.currentPrice - Number(totalStorageCost)).toFixed(2);
+  const isStore = curr.recommendation === 'STORE';
 
   return (
-    <GlassCard className="group p-0 overflow-hidden flex flex-col h-full border-none" delay={index * 0.05}>
-      {/* Decorative header */}
-      <div className={`h-2 w-full ${cfg.bg.replace('/10', '/40')}`} />
-      
-      <div className="p-8 space-y-8 flex flex-col flex-1">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className={`w-14 h-14 rounded-2xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform duration-500`}>
-              <cfg.Icon className={`w-7 h-7 ${cfg.color}`} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none truncate mb-2">{facility.name}</h3>
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-lg bg-white/5 border border-white/5 ${cfg.color}`}>{cfg.label}</span>
-            </div>
-          </div>
+    <div className="bg-white rounded-xl border border-[#D8DFD5] shadow-sm p-6 overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#D8DFD5]">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#2F7D4A]">
+            AI Economic Decision Engine
+          </span>
+          <h3 className="text-xl font-serif font-bold text-[#17201B]">
+            Cold Storage Intelligence: Store vs. Sell Analysis
+          </h3>
+          <p className="text-xs text-[#66736A] mt-1">
+            Determine whether storing your produce delivers positive net ROI after refrigeration costs.
+          </p>
+        </div>
 
-          {low && (
-            <motion.div 
-               animate={{ opacity: [0.5, 1, 0.5] }} 
-               transition={{ duration: 2, repeat: Infinity }}
-               className="shrink-0 inline-flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl shadow-[0_0_15px_rgba(244,63,94,0.2)]"
+        {/* Crop Selectors */}
+        <div className="flex items-center gap-2">
+          {['Tomatoes', 'Potatoes', 'Onions'].map((crop) => (
+            <button
+              key={crop}
+              onClick={() => setSelectedCrop(crop)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
+                selectedCrop === crop
+                  ? 'bg-[#123C2A] text-white border-[#123C2A]'
+                  : 'bg-white text-[#17201B] border-[#D8DFD5] hover:bg-[#F5F3EA]'
+              }`}
             >
-              <AlertTriangle className="w-3 h-3" />
-              Critical
-            </motion.div>
-          )}
-        </div>
-
-        {/* Location */}
-        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center space-x-3 group-hover:bg-white/10 transition-colors">
-          <MapPin className="w-4 h-4 text-slate-500" />
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{facility.location}</p>
-        </div>
-
-        {/* Capacity */}
-        <div className="px-2">
-           <ProgressBar 
-              progress={pct} 
-              label="Operational Capacity" 
-              color={pct < 20 ? '#f43f5e' : pct < 50 ? '#f59e0b' : '#10b981'} 
-           />
-           <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em] text-right mt-3">
-              {facility.available_capacity} / {facility.capacity} Metric Tons
-           </p>
-        </div>
-
-        {/* Rate Grid */}
-        <div className="grid grid-cols-2 gap-4 mt-auto">
-          <div className="bg-white/5 p-5 rounded-2xl border border-white/5 group-hover:border-white/10 transition-colors">
-            <p className="text-[9px] uppercase tracking-widest text-slate-600 font-bold mb-2">Daily Rate</p>
-            <p className="text-white font-black text-2xl italic tracking-tighter">₹{facility.price_per_day}</p>
-          </div>
-          <div className="bg-white/5 p-5 rounded-2xl border border-white/5 group-hover:border-white/10 transition-colors text-right capitalize">
-            <p className="text-[9px] uppercase tracking-widest text-slate-600 font-bold mb-2">Total Node</p>
-            <p className="text-white font-black text-2xl italic tracking-tighter">{facility.capacity}</p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-8 border-t border-white/5 flex items-center justify-between gap-4">
-          <a
-            href={`tel:${facility.contact}`}
-            className="flex items-center gap-3 text-slate-500 hover:text-white transition-all group/call"
-          >
-            <div className="p-2 bg-white/5 rounded-lg group-hover/call:bg-primary-500/20 transition-colors">
-               <Phone className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest">{facility.contact}</span>
-          </a>
-          <AnimatedButton
-            variant="outline"
-            className="px-6 py-3 rounded-xl border-none bg-white/5 text-[10px]"
-            onClick={() => alert('Accessing facility reservation protocol...')}
-            disabled={facility.available_capacity === 0}
-            icon={ArrowRight}
-          >
-            Deploy
-          </AnimatedButton>
+              {crop}
+            </button>
+          ))}
         </div>
       </div>
-    </GlassCard>
+
+      {/* Decision Calculation Matrix */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6 border-b border-[#D8DFD5] bg-[#F5F3EA]/30 -mx-6 px-6">
+        <div className="p-3 bg-white rounded-lg border border-[#D8DFD5]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Current Spot Price</span>
+          <span className="text-xl font-bold text-[#17201B] font-mono mt-1 block">₹{curr.currentPrice}.00<span className="text-xs text-[#66736A]">/kg</span></span>
+          <span className="text-[10px] text-[#66736A]">Mandi spot today</span>
+        </div>
+
+        <div className="p-3 bg-white rounded-lg border border-[#D8DFD5]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Forecast in {curr.days} Days</span>
+          <span className="text-xl font-bold text-[#2F7D4A] font-mono mt-1 block">₹{curr.forecastPrice}.00<span className="text-xs text-[#66736A]">/kg</span></span>
+          <span className="text-[10px] text-[#2F7D4A] font-medium">Expected wholesale</span>
+        </div>
+
+        <div className="p-3 bg-white rounded-lg border border-[#D8DFD5]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">{curr.days}-Day Storage Cost</span>
+          <span className="text-xl font-bold text-[#D9A441] font-mono mt-1 block">-₹{totalStorageCost}<span className="text-xs text-[#66736A]">/kg</span></span>
+          <span className="text-[10px] text-[#66736A]">₹{curr.storageCostPerDay}/day/kg</span>
+        </div>
+
+        <div className="p-3 bg-white rounded-lg border border-[#D8DFD5]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Net Economic Margin</span>
+          <span className={`text-xl font-bold font-mono mt-1 block ${Number(netGain) >= 0 ? 'text-[#2F7D4A]' : 'text-rose-600'}`}>
+            {Number(netGain) >= 0 ? `+₹${netGain}` : `-₹${Math.abs(netGain)}`}<span className="text-xs text-[#66736A]">/kg</span>
+          </span>
+          <span className="text-[10px] text-[#66736A]">After refrigeration fees</span>
+        </div>
+
+        <div className={`p-3 rounded-lg border flex flex-col justify-center col-span-2 md:col-span-1 ${
+          isStore 
+            ? 'bg-[#E8EFE4] border-[#7DBA52] text-[#123C2A]' 
+            : 'bg-rose-50 border-rose-200 text-rose-800'
+        }`}>
+          <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">AI Recommendation</span>
+          <span className="text-lg font-bold uppercase tracking-tight mt-0.5 block flex items-center gap-1.5">
+            {isStore ? <CheckCircle2 className="w-4 h-4 text-[#2F7D4A]" /> : <AlertTriangle className="w-4 h-4 text-rose-600" />}
+            {curr.recommendation}
+          </span>
+          <span className="text-[10px] opacity-90 mt-0.5">
+            {isStore ? 'High net arbitrage' : 'Liquidate at farmgate'}
+          </span>
+        </div>
+      </div>
+
+      <div className="pt-4 flex items-center gap-2 text-xs text-[#66736A]">
+        <Brain className="w-4 h-4 text-[#2F7D4A] shrink-0" />
+        <span><strong>Advisory Insight:</strong> {curr.rationale}</span>
+      </div>
+    </div>
   );
 };
 
@@ -228,6 +139,7 @@ const StorageAvailability = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [locationSearch, setLocationSearch] = useState('');
   const [sortBy, setSortBy] = useState('available');
+  const [bookingFacility, setBookingFacility] = useState(null);
 
   useEffect(() => {
     fetchFacilities();
@@ -262,166 +174,149 @@ const StorageAvailability = () => {
   }, [facilities, typeFilter, locationSearch, sortBy]);
 
   const types = [
-    { value: 'all', label: 'All Clusters', icon: Warehouse },
-    { value: 'cold', label: 'Cold-Chain', icon: Snowflake },
-    { value: 'freezer', label: 'Cryo-Freezer', icon: Wind },
-    { value: 'dry', label: 'Structural-Dry', icon: Package },
+    { value: 'all', label: 'All Warehouses', icon: Warehouse },
+    { value: 'cold', label: 'Refrigerated Cold Chain', icon: Snowflake },
+    { value: 'freezer', label: 'Deep Cold Storage', icon: Wind },
+    { value: 'dry', label: 'Ventilated Dry Warehouse', icon: Package },
   ];
 
-  const stats = {
-    total: facilities.length,
-    totalCap: facilities.reduce((s, f) => s + Number(f.available_capacity), 0),
-    avgPrice: facilities.length
-      ? Math.round(facilities.reduce((s, f) => s + Number(f.price_per_day), 0) / facilities.length)
-      : 0,
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-      {/* AI Advisor Panel */}
-      <SmartStorageAdvisor />
+    <div className="space-y-8">
+      {/* Economic Store vs Sell Advisor Hero */}
+      <EconomicStorageAdvisor />
 
-      {/* Dynamic Statistics Header */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         <GlassCard className="lg:col-span-1 p-10 flex flex-col justify-center border-l-4 border-l-primary-500/50" delay={0}>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">Storage Network Monitoring</p>
-              <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">Global Infrastructure</h2>
-              <p className="text-slate-500 text-sm mt-4 font-medium leading-relaxed">
-                 Accessing high-capacity decentralized storage nodes for agricultural optimization.
-              </p>
-         </GlassCard>
-
-         <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-6">
-            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 flex flex-col justify-center">
-               <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Active Nodes</p>
-               <p className="text-4xl font-black text-white italic tracking-tight">{stats.total}</p>
-            </div>
-            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 flex flex-col justify-center">
-               <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Net Capacity</p>
-               <div className="flex items-baseline space-x-2">
-                 <p className="text-4xl font-black text-primary-500 italic tracking-tight">{stats.totalCap}</p>
-                 <span className="text-xs font-bold text-slate-600 uppercase">MT</span>
-               </div>
-            </div>
-            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 flex flex-col justify-center col-span-2 md:col-span-1">
-               <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Market Index</p>
-               <p className="text-4xl font-black text-amber-500 italic tracking-tight">₹{stats.avgPrice}</p>
-            </div>
-         </div>
-      </div>
-
-      {/* Control Panel */}
-      <GlassCard className="p-6 border-none overflow-visible" delay={0.1}>
-        <div className="flex flex-col lg:flex-row gap-6 items-center">
-          {/* Type Filters */}
-          <div className="flex flex-wrap bg-slate-950/40 p-1.5 rounded-2xl border border-white/5 items-center gap-1.5">
-            {types.map(t_item => {
-              const Icon = t_item.icon;
-              return (
-                <button
-                  key={t_item.value}
-                  onClick={() => setTypeFilter(t_item.value)}
-                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${
-                    typeFilter === t_item.value
-                      ? 'bg-primary-500 text-slate-950 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
-                      : 'text-slate-500 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{t_item.label}</span>
-                </button>
-              );
-            })}
+      {/* Directory & Booking Controls */}
+      <div className="bg-white rounded-xl border border-[#D8DFD5] p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#D8DFD5]">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2F7D4A]">Network Directory</span>
+            <h3 className="text-xl font-serif font-bold text-[#17201B]">Regional Storage & Cold Chain Nodes</h3>
+            <p className="text-xs text-[#66736A] mt-1">
+              Find verified regional cold rooms to preserve freshness and schedule dock space.
+            </p>
           </div>
 
-          {/* Search & Sort Container */}
-          <div className="flex flex-col sm:flex-row flex-1 gap-4 w-full">
-            <div className="relative flex-1 group">
-              <Search className="w-4 h-4 absolute top-1/2 -translate-y-1/2 left-5 text-slate-600 group-focus-within:text-primary-500 transition-colors pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 md:w-64">
+              <Search className="w-4 h-4 absolute top-3 left-3 text-[#66736A]" />
               <input
                 type="text"
-                placeholder="Query Terminal Node..."
+                placeholder="Search hub or district..."
                 value={locationSearch}
                 onChange={e => setLocationSearch(e.target.value)}
-                className="w-full bg-slate-950/40 border border-white/5 text-white pl-12 pr-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest placeholder-slate-700 focus:outline-none focus:border-primary-500 transition-all"
+                className="w-full bg-[#F5F3EA]/50 border border-[#D8DFD5] rounded-lg pl-9 pr-4 py-2 text-xs text-[#17201B] outline-none focus:border-[#2F7D4A]"
               />
-            </div>
-
-            <div className="relative min-w-[220px]">
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="w-full appearance-none bg-slate-950/40 border border-white/5 text-slate-500 font-black text-[10px] uppercase tracking-widest px-6 py-3.5 rounded-2xl focus:outline-none focus:border-primary-500 cursor-pointer transition-all italic transition-all"
-              >
-                <option value="available">Optimize Availability</option>
-                <option value="price">Sort by Valuation</option>
-                <option value="capacity">Max Payload Capacity</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-600 absolute top-1/2 -translate-y-1/2 right-5 pointer-events-none" />
             </div>
           </div>
         </div>
-      </GlassCard>
 
-      {/* Network Results Grid */}
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <motion.div
-            key="loader"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-32 flex flex-col items-center justify-center text-slate-700"
-          >
-            <div className="relative mb-8">
-               <div className="w-16 h-16 border-4 border-primary-500/10 border-t-primary-500 rounded-full animate-spin" />
-               <Warehouse className="w-6 h-6 text-primary-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            </div>
-            <p className="font-black uppercase tracking-[0.5em] text-xs">Pinging Storage Nodes...</p>
-          </motion.div>
-        ) : filtered.length === 0 ? (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-40 text-center flex flex-col items-center justify-center"
-          >
-            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/5">
-               <Warehouse className="w-10 h-10 text-slate-800" />
-            </div>
-            <p className="text-slate-600 font-black uppercase tracking-[0.3em] text-sm">Cluster Data Unavailable</p>
-            <AnimatedButton 
-               variant="outline" 
-               className="mt-8 scale-75 opacity-50"
-               onClick={() => { setTypeFilter('all'); setLocationSearch(''); }}
-            >
-               Reset Uplink
-            </AnimatedButton>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="grid"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {filtered.map((facility, i) => (
-              <StorageCard key={facility.id} facility={facility} index={i} />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Result Meta */}
-      {!loading && filtered.length > 0 && (
-        <div className="flex items-center justify-center space-x-4 pt-12 pb-20 opacity-20">
-           <div className="h-px w-20 bg-gradient-to-r from-transparent to-slate-500" />
-           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.5em]">
-              Network End-of-Stream / {filtered.length} Nodes Resolved
-           </p>
-           <div className="h-px w-20 bg-gradient-to-l from-transparent to-slate-500" />
+        {/* Type Category Filters */}
+        <div className="pt-4 flex flex-wrap gap-2">
+          {types.map(t_item => {
+            const Icon = t_item.icon;
+            return (
+              <button
+                key={t_item.value}
+                onClick={() => setTypeFilter(t_item.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
+                  typeFilter === t_item.value
+                    ? 'bg-[#123C2A] text-white border-[#123C2A]'
+                    : 'bg-white text-[#17201B] border-[#D8DFD5] hover:bg-[#F5F3EA]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{t_item.label}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Facilities Grid */}
+      {loading ? (
+        <div className="flex justify-center p-20">
+          <Loader2 className="w-8 h-8 animate-spin text-[#2F7D4A]" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-xl border border-[#D8DFD5] p-6">
+          <Warehouse className="w-12 h-12 text-[#66736A]/40 mx-auto mb-3" />
+          <h4 className="text-base font-bold text-[#17201B]">No Storage Facilities Found</h4>
+          <p className="text-xs text-[#66736A] mt-1">Try expanding your search query or selecting all warehouse types.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((facility, idx) => {
+            const pct = Math.round((facility.available_capacity / facility.capacity) * 100);
+            return (
+              <div 
+                key={facility.id || idx}
+                className="bg-white rounded-xl border border-[#D8DFD5] shadow-sm hover:border-[#2F7D4A] transition-all p-6 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#E8EFE4] text-[#123C2A] text-[10px] font-bold uppercase tracking-wider border border-[#D8DFD5]">
+                      {facility.type === 'cold' ? '❄️ Cold Storage' : facility.type === 'freezer' ? '🧊 Cryo Freezer' : '📦 Dry Warehouse'}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#123C2A]">
+                      ₹{facility.price_per_day}/day/MT
+                    </span>
+                  </div>
+
+                  <h4 className="text-base font-bold text-[#17201B]">{facility.name}</h4>
+                  <p className="text-xs text-[#66736A] flex items-center gap-1 mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-[#2F7D4A]" />
+                    <span>{facility.location}</span>
+                  </p>
+
+                  {/* Capacity Bar */}
+                  <div className="my-4 p-3 bg-[#F5F3EA] rounded-lg border border-[#D8DFD5]">
+                    <div className="flex justify-between text-xs mb-1.5 font-semibold">
+                      <span className="text-[#66736A]">Available Capacity:</span>
+                      <span className="text-[#123C2A] font-mono">{facility.available_capacity} / {facility.capacity} MT</span>
+                    </div>
+                    <div className="w-full bg-[#D8DFD5] h-2 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${pct < 20 ? 'bg-rose-500' : 'bg-[#2F7D4A]'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[#D8DFD5] flex items-center justify-between gap-3">
+                  <a 
+                    href={`tel:${facility.contact}`}
+                    className="text-xs text-[#66736A] hover:text-[#123C2A] flex items-center gap-1 font-semibold"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-[#2F7D4A]" />
+                    <span>{facility.contact}</span>
+                  </a>
+
+                  <button
+                    onClick={() => setBookingFacility(facility)}
+                    disabled={facility.available_capacity <= 0}
+                    className="px-4 py-2 bg-[#123C2A] hover:bg-[#1E4D36] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    Book Space
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Reservation Modal */}
+      {bookingFacility && (
+        <StorageReservationModal
+          isOpen={!!bookingFacility}
+          onClose={() => setBookingFacility(null)}
+          facility={bookingFacility}
+          onSuccess={() => {
+            fetchFacilities();
+            setBookingFacility(null);
+          }}
+        />
       )}
     </div>
   );

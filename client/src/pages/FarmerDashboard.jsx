@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { LogOut, User, PackageOpen, ClipboardList, LineChart, MessageSquare, Menu, X, Zap, Warehouse, Sprout, Store, Bell, Truck } from 'lucide-react';
+import { 
+  LogOut, User, PackageOpen, ClipboardList, LineChart, MessageSquare, 
+  Menu, X, Zap, Warehouse, Sprout, Store, Bell, Truck, Sparkles, 
+  TrendingUp, ArrowRight, Layers, MapPin, CheckCircle2 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationBell from '../components/NotificationBell';
 
@@ -15,200 +19,244 @@ import StorageAvailability from '../components/StorageAvailability';
 import FarmerFutureHarvest from '../components/dashboard/FarmerFutureHarvest';
 import FarmerTransportTracking from '../components/dashboard/FarmerTransportTracking';
 import FarmerShop from '../components/dashboard/FarmerShop';
+import MarketIntelligenceMap from '../components/dashboard/MarketIntelligenceMap';
+import DemoRoleSwitcher from '../components/DemoRoleSwitcher';
 import FarmBackground from '../components/ui/FarmBackground';
-import GlassCard from '../components/ui/GlassCard';
 import SetPasswordModal from '../components/SetPasswordModal';
+import AgriPipelineModal from '../components/dashboard/AgriPipelineModal';
+import { demandForecastService } from '../services/demandForecastService';
 
 const FarmerDashboard = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('profile');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showPipelineModal, setShowPipelineModal] = useState(false);
+
+  // Farmer AI Insight (Phase 3)
+  const farmerInsight = demandForecastService.getFarmerInsight('Tomato', 'Trichy', 500);
 
   const tabs = [
-    { id: 'profile',   label: t('tab_profile'),                  icon: User },
-    { id: 'products',  label: t('tab_products'),                  icon: PackageOpen },
-    { id: 'fastsell',  label: t('tab_fast_sell') || 'Fast Sell',  icon: Zap },
-    { id: 'shop',      label: t('tab_my_shop'),                   icon: Store },
-    { id: 'orders',    label: t('tab_orders'),                    icon: ClipboardList },
-    { id: 'transport', label: t('tab_transport') || 'Logistics & Tracking', icon: Truck },
-    { id: 'analytics', label: t('tab_analytics'),                 icon: LineChart },
-    { id: 'storage',   label: t('tab_storage'),                   icon: Warehouse },
-    { id: 'future',    label: t('tab_future'),                    icon: Sprout },
-    { id: 'reviews',   label: t('tab_reviews'),                   icon: MessageSquare },
+    { id: 'profile',   label: 'Farm Profile',                    icon: User },
+    { id: 'products',  label: 'Field Inventory',                icon: PackageOpen },
+    { id: 'future',    label: 'Harvest Schedule',                icon: Sprout },
+    { id: 'orders',    label: 'Supply Contracts',                icon: ClipboardList },
+    { id: 'fastsell',  label: 'Fast Sell',                       icon: Zap },
+    { id: 'insights',  label: 'Demand Intelligence',             icon: Layers },
+    { id: 'transport', label: 'Reefer Logistics',                icon: Truck },
+    { id: 'storage',   label: 'Cold Storage Decisions',          icon: Warehouse },
+    { id: 'analytics', label: 'Escrow & Payouts',                icon: LineChart },
+    { id: 'shop',      label: 'Direct Shop',                     icon: Store },
+    { id: 'reviews',   label: 'Buyer Feedback',                  icon: MessageSquare },
   ];
-
-  const handleTabClick = (id) => {
-     setActiveTab(id);
-     setIsMobileMenuOpen(false);
-  };
-
-  const renderSidebar = () => {
-    const activeTabObj = tabs.find(t => t.id === activeTab);
-    return (
-      <div className="flex flex-col h-full bg-slate-950/40 backdrop-blur-2xl border-r border-white/5">
-        <div className="p-10 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-             <div className="bg-primary-500/20 p-2 rounded-xl border border-primary-500/30">
-                <Sprout className="w-5 h-5 text-primary-500" />
-             </div>
-             <h1 className="text-xl font-black text-white tracking-tighter uppercase italic">
-               Direct
-             </h1>
-          </div>
-          {isMobileMenuOpen && (
-             <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-white rounded-xl transition-colors">
-               <X className="w-6 h-6" />
-             </button>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto py-8 px-6 space-y-3 relative">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-6 px-4">Navigation</p>
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={`w-full flex items-center px-5 py-4 text-xs font-bold rounded-2xl transition-all relative z-10 uppercase tracking-widest ${
-                  isActive 
-                    ? 'text-slate-950' 
-                    : tab.id === 'fastsell' ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                {isActive && (
-                   <motion.div 
-                     layoutId="farmer-active-tab"
-                     className={`absolute inset-0 rounded-2xl -z-10 shadow-lg ${tab.id === 'fastsell' ? 'bg-amber-500' : 'bg-primary-500'}`}
-                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                   />
-                )}
-                <Icon className={`w-4 h-4 mr-4 ${isActive ? 'text-slate-950 stroke-[3]' : tab.id === 'fastsell' ? 'text-amber-500' : 'text-slate-500'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="p-6 border-t border-white/5 space-y-4 bg-slate-950/20">
-          <div className="flex items-center space-x-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-500/50 shadow-lg shadow-primary-500/10">
-                {user?.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <User className="w-6 h-6 text-slate-400 m-2" />}
-             </div>
-             <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{user?.name || 'Farmer'}</p>
-                <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">{user?.role || 'Producer'}</p>
-             </div>
-          </div>
-          <button 
-            onClick={logout}
-            className="w-full flex items-center justify-center px-4 py-4 text-xs font-bold text-rose-500 hover:bg-rose-500/10 rounded-2xl transition-all border border-rose-500/20 uppercase tracking-widest"
-          >
-            <LogOut className="w-4 h-4 mr-3" />
-            {t('logout')}
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <FarmBackground>
       <SetPasswordModal />
-      <div className="min-h-screen flex flex-col md:flex-row text-slate-100 font-sans selection:bg-primary-500/30">
+      <div className="min-h-screen text-[#17201B] font-sans">
         
-        {/* Mobile Header */}
-        <header className="md:hidden glass border-b border-white/10 p-4 sticky top-0 z-40 flex justify-between items-center bg-slate-950/40 backdrop-blur-md">
-           <div className="flex items-center">
-              <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 mr-2 text-slate-400 hover:text-white transition-colors">
-                <Menu className="w-6 h-6" />
+        {/* Commercial Platform Navigation Bar */}
+        <header className="bg-white border-b border-[#D8DFD5] sticky top-0 z-40 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => setIsMobileMenuOpen(prev => !prev)} 
+                className="lg:hidden p-2 text-[#66736A] hover:text-[#17201B]"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
-              <h1 className="text-xl font-black text-white tracking-tighter italic uppercase underline decoration-primary-500 decoration-4 underline-offset-4">Direct</h1>
-           </div>
-           <div className="flex items-center space-x-3">
-              <NotificationBell />
-              <div className="w-9 h-9 bg-slate-800 rounded-full flex justify-center items-center overflow-hidden border border-slate-700 shadow-sm ring-2 ring-primary-500/20">
-                 {user?.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#123C2A] flex items-center justify-center text-white">
+                  <Sprout className="w-4 h-4 text-[#7DBA52]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-serif font-bold text-lg text-[#123C2A] tracking-tight">FarmDirect</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E8EFE4] text-[#2F7D4A] uppercase tracking-wider">
+                      Producer Hub
+                    </span>
+                  </div>
+                </div>
               </div>
-           </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <NotificationBell />
+              <div className="h-6 w-px bg-[#D8DFD5] hidden sm:block" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#E8EFE4] text-[#123C2A] flex items-center justify-center font-bold text-xs border border-[#D8DFD5]">
+                  {user?.avatar ? (
+                    <img src={user.avatar} className="w-full h-full rounded-full object-cover" alt="avatar" />
+                  ) : (
+                    <span>{user?.name ? user.name[0] : 'R'}</span>
+                  )}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-bold text-[#17201B] leading-none">{user?.name || 'Ravi Teja Farms'}</p>
+                  <p className="text-[10px] text-[#66736A] mt-0.5">Verified Producer • Trichy</p>
+                </div>
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 text-[#66736A] hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal Navigation Sub-bar (Desktop) */}
+          <div className="hidden lg:block border-t border-[#D8DFD5] bg-[#F5F3EA]/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <nav className="flex space-x-1 overflow-x-auto py-2 scrollbar-none">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-[#123C2A] text-white shadow-xs'
+                          : 'text-[#66736A] hover:text-[#17201B] hover:bg-white'
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#7DBA52]' : 'text-[#66736A]'}`} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
         </header>
 
-        {/* Mobile Sidebar Overlay */}
+        {/* Mobile Navigation Drawer */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-             <>
-                <motion.div 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
-                />
-                <motion.aside 
-                  initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-                  transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                  className="fixed inset-y-0 left-0 w-[85vw] max-w-sm z-50 md:hidden flex flex-col shadow-2xl"
-                >
-                  {renderSidebar()}
-                </motion.aside>
-             </>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden bg-white border-b border-[#D8DFD5] px-4 py-3 space-y-1 shadow-md"
+            >
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold ${
+                      isActive ? 'bg-[#123C2A] text-white' : 'text-[#66736A] hover:bg-[#F5F3EA]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:flex w-80 flex-col z-20 shrink-0 sticky top-0 h-screen">
-           {renderSidebar()}
-        </aside>
-
         {/* Main Content Area */}
-        <main className="flex-1 w-full overflow-x-hidden p-6 md:p-12 lg:p-16">
-           {/* Section Header */}
-           <div className="mb-12">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center px-4 py-1.5 bg-primary-500/10 border border-primary-500/20 rounded-full text-primary-400 text-[10px] font-black uppercase tracking-[0.4em] mb-4"
-              >
-                 System Management / {activeTab}
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-none"
-              >
-                {tabs.find(t => t.id === activeTab)?.label}
-              </motion.h2>
-           </div>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          
+          {/* Platform Perspective Switcher */}
+          <DemoRoleSwitcher onOpenPipelineModal={() => setShowPipelineModal(true)} />
 
-           <AnimatePresence mode="wait">
-              <motion.div
-                 key={activeTab}
-                 initial={{ opacity: 0, y: 30 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 exit={{ opacity: 0, y: -20 }}
-                 transition={{ 
-                   type: "spring",
-                   damping: 20,
-                   stiffness: 100,
-                   duration: 0.5 
-                 }}
-                 className="w-full max-w-7xl mx-auto min-h-[60vh]"
-              >
-                 <GlassCard className="h-full border-none p-0 bg-transparent backdrop-blur-none shadow-none">
-                    {activeTab === 'profile'   && <FarmerProfile />}
-                    {activeTab === 'products'  && <FarmerProducts />}
-                    {activeTab === 'fastsell'  && <FastSell />}
-                    {activeTab === 'orders'    && <FarmerOrders />}
-                    {activeTab === 'transport' && <FarmerTransportTracking />}
-                    {activeTab === 'analytics' && <FarmerAnalytics />}
-                    {activeTab === 'shop'      && <FarmerShop />}
-                    {activeTab === 'storage'   && <StorageAvailability />}
-                    {activeTab === 'future'    && <FarmerFutureHarvest />}
-                    {activeTab === 'reviews'   && <FarmerReviews />}
-                 </GlassCard>
-              </motion.div>
-           </AnimatePresence>
+          {/* Agro Demand Intelligence Hero Banner */}
+          <div className="bg-white rounded-xl border border-[#D8DFD5] p-6 shadow-sm overflow-hidden relative">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#D8DFD5]">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8EFE4] text-[#123C2A] text-[10px] font-bold uppercase tracking-wider mb-2 border border-[#D8DFD5]">
+                  <Sparkles className="w-3 h-3 text-[#2F7D4A]" /> AI Demand Intelligence Engine
+                </div>
+                <h3 className="text-xl font-serif font-bold text-[#17201B]">
+                  {farmerInsight.headline}
+                </h3>
+                <p className="text-xs text-[#66736A] mt-1 max-w-2xl leading-relaxed">
+                  <span className="font-bold text-[#123C2A]">Recommendation:</span> {farmerInsight.recommendedAction} (Est. Net Realization: <span className="text-[#2F7D4A] font-bold">{farmerInsight.potentialRevenueBoost}</span>)
+                </p>
+              </div>
+
+              {/* Badges */}
+              <div className="grid grid-cols-3 gap-3 shrink-0">
+                <div className="p-3 bg-[#F5F3EA] border border-[#D8DFD5] rounded-lg text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Planned Yield</span>
+                  <span className="text-base font-bold text-[#17201B] font-mono mt-0.5 block">{farmerInsight.upcomingHarvestKg} kg</span>
+                </div>
+                <div className="p-3 bg-[#F5F3EA] border border-[#D8DFD5] rounded-lg text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Chennai Demand</span>
+                  <span className="text-base font-bold text-[#2F7D4A] font-mono mt-0.5 block">{farmerInsight.predictedRegionalDemandKg} kg</span>
+                </div>
+                <div className="p-3 bg-[#E8EFE4] border border-[#7DBA52] rounded-lg text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#123C2A] block">Opportunity</span>
+                  <span className="text-base font-bold text-[#123C2A] uppercase block mt-0.5">{farmerInsight.opportunityLevel}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Operational Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 pt-5">
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Active Crops</span>
+                <span className="text-base font-bold text-[#17201B] font-mono mt-0.5 block">4 Registered</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Stock on Hand</span>
+                <span className="text-base font-bold text-[#2F7D4A] font-mono mt-0.5 block">1,250 kg</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Harvest Window</span>
+                <span className="text-base font-bold text-[#123C2A] font-mono mt-0.5 block">500 kg (2d)</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Today's Sales</span>
+                <span className="text-base font-bold text-[#D9A441] font-mono mt-0.5 block">₹14,200</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Escrow Settled</span>
+                <span className="text-base font-bold text-[#123C2A] font-mono mt-0.5 block">₹92,400</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Active Contracts</span>
+                <span className="text-base font-bold text-[#2F7D4A] font-mono mt-0.5 block">3 Batches</span>
+              </div>
+              <div className="p-3 bg-[#F5F3EA]/60 rounded-lg border border-[#D8DFD5]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#66736A] block">Avg Realized</span>
+                <span className="text-base font-bold text-[#17201B] font-mono mt-0.5 block">₹38.50/kg</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Tab View */}
+          <div className="w-full">
+            {activeTab === 'profile'   && <FarmerProfile />}
+            {activeTab === 'products'  && <FarmerProducts />}
+            {activeTab === 'fastsell'  && <FastSell />}
+            {activeTab === 'shop'      && <FarmerShop />}
+            {activeTab === 'future'    && <FarmerFutureHarvest />}
+            {activeTab === 'orders'    && <FarmerOrders />}
+            {activeTab === 'insights'  && <MarketIntelligenceMap />}
+            {activeTab === 'transport' && <FarmerTransportTracking />}
+            {activeTab === 'storage'   && <StorageAvailability />}
+            {activeTab === 'analytics' && <FarmerAnalytics />}
+            {activeTab === 'reviews'   && <FarmerReviews />}
+          </div>
         </main>
+
+        {/* Demo Pipeline Modal */}
+        <AgriPipelineModal
+          isOpen={showPipelineModal}
+          onClose={() => setShowPipelineModal(false)}
+        />
       </div>
     </FarmBackground>
   );

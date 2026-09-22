@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getShopProducts, purchaseProduct } from '../../services/shopService';
 import { supabase } from '../../lib/supabaseClient';
+import { notifyError, notifySuccess } from '../../services/notificationService';
 import MockRazorpay from './MockRazorpay';
 
 const BuyerShop = () => {
@@ -92,7 +93,7 @@ const BuyerShop = () => {
       setTimeout(() => setOrderSuccessDetails(null), 10000);
     } catch (err) {
       console.error(err);
-      alert('Error completing purchase: ' + err.message);
+      notifyError('Purchase Failed', 'Error completing purchase: ' + err.message);
       setSelectedProduct(null);
     }
   };

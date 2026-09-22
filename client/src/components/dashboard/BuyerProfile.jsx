@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { UserCircle, MapPin, Save, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getProfile, updateProfile } from '../../services/authService';
+import { notifySuccess, notifyError } from '../../services/notificationService';
 
 const BuyerProfile = () => {
   const { user } = useAuth();
@@ -46,8 +47,9 @@ const BuyerProfile = () => {
         setProfile(prev => ({ ...prev, name: updated.name || prev.name, location: updated.location || prev.location }));
       }
       setIsEditing(false);
+      notifySuccess('Profile Updated', 'Profile changes saved successfully.');
     } catch (err) {
-      alert(t('error_update_profile', 'Error updating profile: ') + err.message);
+      notifyError('Profile Update Failed', (t('error_update_profile', 'Error updating profile: ')) + err.message);
     } finally {
       setSaving(false);
     }

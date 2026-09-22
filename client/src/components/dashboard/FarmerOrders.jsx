@@ -117,11 +117,15 @@ const FarmerOrders = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order =>
-    order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.buyer?.name && order.buyer.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (order.product?.name && order.product.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredOrders = orders.filter(order => {
+    const id = String(order._id || order.id || '');
+    return (
+      id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.buyer?.name && order.buyer.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.product?.name && order.product.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.product?.product_name && order.product.product_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
@@ -171,43 +175,46 @@ const FarmerOrders = () => {
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order) => (
-                <motion.tr variants={item} key={order._id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                  <td className="py-5 px-4">
-                    <span className="font-mono text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">
-                      #{order._id.slice(-6).toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-5 px-4 text-white">
-                    <p className="font-bold">{order.buyer?.name || order.customer_name || 'Anonymous'}</p>
-                    <p className="text-xs text-slate-500 flex items-center mt-1">
-                      <MapPin className="w-3 h-3 mr-1" /> {order.buyer?.location || 'No location'}
-                    </p>
-                  </td>
-                  <td className="py-5 px-4 text-white">
-                    <p className="font-bold">{order.product?.product_name || order.product_name}</p>
-                    <p className="text-xs text-slate-500 font-semibold">{order.quantity} kg</p>
-                  </td>
-                  <td className="py-5 px-4">
-                    <p className="font-bold text-primary-400">₹{order.totalPrice}</p>
-                  </td>
-                  <td className="py-5 px-4">
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
-                      className={`text-xs font-bold uppercase py-2 px-3 rounded-xl border bg-slate-800 focus:ring-2 focus:ring-primary-500 focus:outline-none cursor-pointer transition-all ${
-                        order.status === 'Ordered'   ? 'text-amber-400 border-amber-500/30' :
-                        order.status === 'Picked Up' ? 'text-cyan-400 border-cyan-500/30'  :
-                        'text-primary-400 border-primary-500/30'
-                      }`}
-                    >
-                      <option value="Ordered" className="bg-slate-900 text-white">Pending</option>
-                      <option value="Picked Up" className="bg-slate-900 text-white">Shipped</option>
-                      <option value="Delivered" className="bg-slate-900 text-white">Delivered</option>
-                    </select>
-                  </td>
-                </motion.tr>
-              ))
+              filteredOrders.map((order) => {
+                const oid = String(order._id || order.id || '');
+                return (
+                  <motion.tr variants={item} key={oid} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                    <td className="py-5 px-4">
+                      <span className="font-mono text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">
+                        #{oid.slice(-6).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-5 px-4 text-white">
+                      <p className="font-bold">{order.buyer?.name || order.customer_name || 'Anonymous'}</p>
+                      <p className="text-xs text-slate-500 flex items-center mt-1">
+                        <MapPin className="w-3 h-3 mr-1" /> {order.buyer?.location || 'No location'}
+                      </p>
+                    </td>
+                    <td className="py-5 px-4 text-white">
+                      <p className="font-bold">{order.product?.product_name || order.product_name}</p>
+                      <p className="text-xs text-slate-500 font-semibold">{order.quantity} kg</p>
+                    </td>
+                    <td className="py-5 px-4">
+                      <p className="font-bold text-primary-400">₹{order.totalPrice}</p>
+                    </td>
+                    <td className="py-5 px-4">
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleUpdateStatus(oid, e.target.value)}
+                        className={`text-xs font-bold uppercase py-2 px-3 rounded-xl border bg-slate-800 focus:ring-2 focus:ring-primary-500 focus:outline-none cursor-pointer transition-all ${
+                          order.status === 'Ordered'   ? 'text-amber-400 border-amber-500/30' :
+                          order.status === 'Picked Up' ? 'text-cyan-400 border-cyan-500/30'  :
+                          'text-primary-400 border-primary-500/30'
+                        }`}
+                      >
+                        <option value="Ordered" className="bg-slate-900 text-white">Pending</option>
+                        <option value="Picked Up" className="bg-slate-900 text-white">Shipped</option>
+                        <option value="Delivered" className="bg-slate-900 text-white">Delivered</option>
+                      </select>
+                    </td>
+                  </motion.tr>
+                );
+              })
             )}
           </motion.tbody>
         </table>
@@ -221,7 +228,7 @@ const FarmerOrders = () => {
             onClose={() => setTransportModalOrder(null)}
             onSuccess={() => {
               fetchOrders();
-              showNotification('Transport assigned & tracking started!', 'shipping');
+              notifySuccess('Transport Assigned!', 'Tracking telemetry has started.');
             }}
           />
         )}

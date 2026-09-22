@@ -8,6 +8,7 @@ import { getSmartPriceSuggestion } from '../../services/marketService';
 import { notifySuccess, notifyError, notifyLowStock, notifyAI } from '../../services/notificationService';
 import useVoice from '../../hooks/useVoice';
 import { getExpiringFastSells } from '../../services/demandService';
+import StorageReservationModal from '../StorageReservationModal';
 
 const PERISHABLE_CATEGORIES = ['Vegetables', 'Fruits', 'Leafy Greens', 'Leafy'];
 const LOW_STOCK_THRESHOLD = 20;
@@ -34,6 +35,7 @@ const FarmerProducts = () => {
   const [newProduct, setNewProduct] = useState({ name: '', category: 'Vegetables', pricePerKg: '', quantity: '', image: '' });
   const [priceSuggestion, setPriceSuggestion] = useState(null);
   const [storageModal, setStorageModal] = useState(null);
+  const [reservationFacility, setReservationFacility] = useState(null);
   const [voiceStatus, setVoiceStatus] = useState('');
 
   const handleVoiceResult = useCallback((parsed, raw) => {
@@ -278,7 +280,13 @@ const FarmerProducts = () => {
                       <span className="text-slate-400">📦 Capacity: {s.capacity}</span>
                       <span className="text-emerald-400 font-bold">{s.cost}</span>
                     </div>
-                    <button className="mt-3 w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-xl text-xs font-bold transition-colors border border-amber-500/20">
+                    <button 
+                      onClick={() => {
+                        setReservationFacility({ id: 'near-' + i, name: s.name, location: s.distance, price_per_day: 120, type: 'cold', available_capacity: 50 });
+                        setStorageModal(null);
+                      }}
+                      className="mt-3 w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-xl text-xs font-bold transition-colors border border-amber-500/20 cursor-pointer"
+                    >
                       Book Storage
                     </button>
                   </div>
@@ -288,6 +296,13 @@ const FarmerProducts = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Storage Reservation Modal */}
+      <StorageReservationModal
+        facility={reservationFacility}
+        isOpen={!!reservationFacility}
+        onClose={() => setReservationFacility(null)}
+      />
 
       {/* Add Product Modal */}
       <AnimatePresence>

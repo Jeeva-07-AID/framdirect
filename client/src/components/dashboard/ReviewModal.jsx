@@ -3,6 +3,7 @@ import { createReview } from '../../services/reviewService';
 import { useTranslation } from 'react-i18next';
 import { X, Star, Loader2, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { notifyError, notifySuccess } from '../../services/notificationService';
 
 const ReviewModal = ({ order, onClose, onSuccess }) => {
   const { t } = useTranslation();
@@ -20,10 +21,11 @@ const ReviewModal = ({ order, onClose, onSuccess }) => {
         rating,
         comment
       });
+      notifySuccess('Review Submitted! ⭐', 'Thank you for rating the producer.');
       onSuccess();
       onClose();
     } catch (err) {
-      alert(t('error_submit_review') + (err.message || 'Unknown error'));
+      notifyError('Review Failed', (t('error_submit_review') || 'Error submitting review: ') + (err.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }

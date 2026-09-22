@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Truck, Clock, MapPin, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { getTransportRoutes, assignTransportToOrder } from '../services/transportService';
+import { notifyError, notifySuccess } from '../services/notificationService';
 
 const TransportSelection = ({ order, isOpen, onClose, onSuccess }) => {
   const [routes, setRoutes] = useState([]);
@@ -34,11 +35,12 @@ const TransportSelection = ({ order, isOpen, onClose, onSuccess }) => {
     if (!selectedRoute) return;
     setAssigning(true);
     try {
-      await assignTransportToOrder(order._id, selectedRoute.id, selectedRoute.boarding_point);
+      const orderId = order.id || order._id;
+      await assignTransportToOrder(orderId, selectedRoute.id, selectedRoute.boarding_point);
       onSuccess();
       onClose();
     } catch (err) {
-      alert('Error assigning transport: ' + err.message);
+      notifyError('Transport Assignment Failed', err.message || 'Error assigning route');
     } finally {
       setAssigning(false);
     }

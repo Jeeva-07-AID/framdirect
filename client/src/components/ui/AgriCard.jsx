@@ -29,5 +29,4 @@ export const AgriCard = ({ children, className = '', hover = true, delay = 0, ..
   );
 };
 
-export const GlassCard = AgriCard;
 export default AgriCard;

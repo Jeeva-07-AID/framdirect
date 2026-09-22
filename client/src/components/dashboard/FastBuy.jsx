@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Clock, Zap, Loader2, ArrowRightLeft, User, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getActiveFastSellItems, subscribeToFastSell, purchaseFastSellItem } from '../../services/fastSellService';
+import { notifySuccess, notifyError } from '../../services/notificationService';
 import PaymentModal from '../PaymentModal'; // Simulated Razorpay
 
 const FastBuy = () => {
@@ -72,12 +73,12 @@ const FastBuy = () => {
           paymentMethod: method,
           paymentStatus: status
        });
-       alert(t('fast_buy_success', { quantity: item.quantity, product: item.productName }));
+       notifySuccess('Flash Deal Acquired! ⚡', t('fast_buy_success', { quantity: item.quantity, product: item.productName }) || `Successfully bought ${item.quantity}kg of ${item.productName}`);
        fetchItems(); // refresh list manually in case realtime delays
     } catch (err) {
-      alert(t('fast_buy_failed') + err.message);
+       notifyError('Purchase Failed', (t('fast_buy_failed') || 'Could not complete purchase: ') + err.message);
     } finally {
-      setLoading(false);
+       setLoading(false);
     }
   };
 
